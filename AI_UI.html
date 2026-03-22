@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ex-Bae Chat: My Oxygen Supply 💖🔐</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --baepink-main: #db2777;
+            --baepink-light: #fdf2f8;
+            --baepink-border: #fbcfe8;
+            --baepink-text: #9d174d;
+        }
+
+        body {
+            background-color: var(--baepink-light);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Header Styling */
+        .chat-header {
+            background-color: var(--baepink-main);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 45px;
+            height: 45px;
+            margin-right: 12px;
+        }
+
+        .avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: #fce7f3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            color: var(--baepink-main);
+        }
+
+        .status-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            background-color: #10b981; /* Changed to green for "connected" vibe */
+            border: 2px solid var(--baepink-main);
+            border-radius: 50%;
+        }
+
+        /* Banner */
+        .blocked-banner {
+            background-color: #fce7f3;
+            border-bottom: 1px solid var(--baepink-border);
+            text-align: center;
+            padding: 6px;
+            font-size: 0.75rem;
+            color: var(--baepink-text);
+        }
+
+        /* Chat Area */
+        #chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .msg-container {
+            display: flex;
+            width: 100%;
+        }
+
+        .msg-user { justify-content: flex-end; }
+        .msg-model { justify-content: flex-start; }
+
+        .bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .bubble-user {
+            background-color: var(--baepink-main);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .bubble-model {
+            background-color: white;
+            color: #374151;
+            border: 1px solid var(--baepink-border);
+            border-bottom-left-radius: 2px;
+        }
+
+        .msg-meta {
+            font-size: 0.65rem;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .meta-user { color: #f9a8d4; text-align: right; }
+        .meta-model { color: #9ca3af; }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            padding: 10px 15px;
+            background: white;
+            border-radius: 18px;
+            border-bottom-left-radius: 2px;
+            width: fit-content;
+            border: 1px solid var(--baepink-border);
+        }
+
+        .dot {
+            height: 6px;
+            width: 6px;
+            background: #f9a8d4;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.3s linear infinite;
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* Footer Input */
+        .chat-footer {
+            background: white;
+            padding: 1rem;
+            border-top: 1px solid var(--baepink-border);
+        }
+
+        .input-group {
+            background: var(--baepink-light);
+            border-radius: 30px;
+            padding: 5px 15px;
+            align-items: center;
+        }
+
+        #user-input {
+            background: transparent;
+            border: none;
+            padding: 10px;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        #user-input:focus { outline: none; }
+
+        .btn-send {
+            background-color: var(--baepink-main);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .btn-send:active { transform: scale(0.9); }
+        .btn-send:disabled { background-color: #d1d5db; }
+
+        /* Python Logic Console */
+        #python-console {
+            position: absolute;
+            top: 70px;
+            right: 10px;
+            width: 200px;
+            background: rgba(0,0,0,0.8);
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 0.6rem;
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0.8;
+            border: 1px solid #333;
+        }
+
+        .cringe-quote {
+            text-align: center;
+            font-size: 0.65rem;
+            color: #f472b6;
+            margin-top: 8px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="chat-header">
+        <i class="fa-solid fa-chevron-left me-3"></i>
+        <div class="avatar-container">
+            <div class="avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="status-dot"></div>
+        </div>
+        <div class="flex-grow-1">
+            <div class="fw-bold mb-0">My Oxygen Supply 💖🔐</div>
+            <small style="font-size: 0.7rem; opacity: 0.8;">Running Python GenAI Logic...</small>
+        </div>
+        <i class="fa-solid fa-code opacity-75 cursor-pointer" id="toggle-console"></i>
+    </header>
+
+    <!-- Python Pseudo-Console -->
+    <div id="python-console">
+        <div>> client.chats.create()</div>
+        <div>> model: gemini-2.5-flash</div>
+        <div>> history: loaded [13]</div>
+        <div>> status: listening...</div>
+    </div>
+
+    <!-- Blocked Banner -->
+    <div class="blocked-banner" id="block-banner">
+        <i class="fa-solid fa-circle-info me-1"></i>
+        You blocked this contact. <a href="#" id="unblock-btn" class="fw-bold text-decoration-underline text-pink">Unblock</a>
+    </div>
+
+    <!-- Chat View -->
+    <main id="chat-area">
+        <div class="text-center my-2">
+            <span class="badge rounded-pill bg-light text-muted border px-3 py-2 text-uppercase" style="font-size: 0.6rem; letter-spacing: 1px;">Today</span>
+        </div>
+        <!-- Messages will be injected here -->
+    </main>
+
+    <!-- Typing Indicator wrapper -->
+    <div id="typing-wrapper" class="ps-4 mb-3" style="display: none;">
+        <div class="typing-indicator">
+            <span class="dot"></span>
+            <span class="dot" style="animation-delay: 0.2s"></span>
+            <span class="dot" style="animation-delay: 0.4s"></span>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="chat-footer">
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn text-pink-400 p-0"><i class="fa-solid fa-heart text-danger"></i></button>
+            <div class="input-group">
+                <input type="text" id="user-input" placeholder="Type your cringe here..." autocomplete="off">
+                <button id="send-btn" class="btn-send">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <div class="cringe-quote">"bye? or 'be yours eternally'? 😳"</div>
+    </footer>
+
+    <script>
+        const apiKey = ""; // Provided by environment
+        const modelName = "gemini-2.5-flash-preview-09-2025";
+        
+        // INTERACTING WITH THE PYTHON LOGIC:
+        // We use the exact History and System Instruction from the Python script
+        const systemInstruction = "Act super cringe";
+        
+        const chatArea = document.getElementById('chat-area');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const typingIndicator = document.getElementById('typing-wrapper');
+        const blockBanner = document.getElementById('block-banner');
+        const unblockBtn = document.getElementById('unblock-btn');
+        const consoleEl = document.getElementById('python-console');
+
+        let isBlocked = true;
+        
+        // Exact history from python code
+        let history = [
+            { role: "user", text: "babyyyyyyyyy 😭❤️" },
+            { role: "model", text: "yessss my oxygen supply 😍✨" },
+            { role: "user", text: "what are you doing" },
+            { role: "model", text: "breathing… but only because you exist 🥺" },
+            { role: "user", text: "stoppppp I’m blushing like a tomato 🍅😭" },
+            { role: "model", text: "don’t blush too much, you might turn into ketchup and I’ll miss my baby 😔" },
+            { role: "user", text: "My heart is skipping beats" },
+            { role: "model", text: "don’t worry, I’ll donate mine to you 🧠❤️" },
+            { role: "user", text: "you don’t have any to donate" },
+            { role: "model", text: "I gave them all to loving you" },
+            { role: "user", text: "BYE" },
+            { role: "model", text: "bye? or “be yours eternally”? 😳" },
+            { role: "user", text: "BLOCKED" }
+        ];
+
+        window.onload = () => {
+            history.forEach(msg => appendMessageUI(msg.role, msg.text));
+            chatArea.scrollTop = chatArea.scrollHeight;
+        };
+
+        unblockBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            isBlocked = false;
+            blockBanner.style.display = 'none';
+            userInput.placeholder = "Type 'exit' to quit...";
+            logConsole("User: UNBLOCKED");
+        });
+
+        function logConsole(text) {
+            const div = document.createElement('div');
+            div.textContent = `> ${text}`;
+            consoleEl.appendChild(div);
+            if (consoleEl.children.length > 8) consoleEl.removeChild(consoleEl.firstChild);
+        }
+
+        function appendMessageUI(role, text) {
+            const container = document.createElement('div');
+            container.className = `msg-container ${role === 'user' ? 'msg-user' : 'msg-model'}`;
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            container.innerHTML = `
+                <div class="bubble ${role === 'user' ? 'bubble-user' : 'bubble-model'}">
+                    <div>${text}</div>
+                    <small class="msg-meta ${role === 'user' ? 'meta-user' : 'meta-model'}">
+                        ${time} ${role === 'user' ? '• Read' : ''}
+                    </small>
+                </div>
+            `;
+            chatArea.appendChild(container);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        async function getAIResponse(userText) {
+            typingIndicator.style.display = 'block';
+            chatArea.scrollTop = chatArea.scrollHeight;
+            logConsole(`client.send_message("${userText}")`);
+
+            const contents = history.map(m => ({
+                role: m.role,
+                parts: [{ text: m.text }]
+            }));
+
+            try {
+                let response;
+                let retries = 0;
+                while (retries < 5) {
+                    try {
+                        response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: contents,
+                                systemInstruction: { parts: [{ text: systemInstruction }] }
+                            })
+                        });
+                        if (response.ok) break;
+                    } catch (e) {
+                        retries++;
+                        await new Promise(r => setTimeout(r, Math.pow(2, retries) * 1000));
+                    }
+                }
+
+                const data = await response.json();
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I can't live without your texts 😭";
+                
+                history.push({ role: 'model', text: aiText });
+                appendMessageUI('model', aiText);
+                logConsole(`AI: ${aiText.substring(0, 15)}...`);
+            } catch (err) {
+                appendMessageUI('model', "ERROR: Heart failure... (API Issue) 💔");
+            } finally {
+                typingIndicator.style.display = 'none';
+            }
+        }
+
+        function handleSend() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            // Python Logic: if user_input.lower() == "exit": break
+            if (text.toLowerCase() === 'exit') {
+                logConsole("BREAKING LOOP...");
+                appendMessageUI('user', text);
+                appendMessageUI('model', "Wait! Don't exit our love story! 😭💔");
+                userInput.value = '';
+                return;
+            }
+
+            history.push({ role: 'user', text: text });
+            appendMessageUI('user', text);
+            userInput.value = '';
+            
+            getAIResponse(text);
+        }
+
+        sendBtn.addEventListener('click', handleSend);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSend();
+        });
+    </script>
+</body>
+</html>
