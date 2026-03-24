@@ -1,6 +1,9 @@
+#This code works but there is an issue. The code responds like a function call which gives it a machine feel. So next time, we will try to send the reponse of the function to the AI so 
+#that the AI generates a response using the result of the function in the code.
 import json
 from google import genai
 import os
+from google.genai import types
 from dotenv import load_dotenv
 
 # load API key
@@ -11,9 +14,11 @@ client = genai.Client(api_key=api_key)
 
 # simple functions
 def add(a, b):
+    print("Executing add function")
     return a + b
 
 def subtract(a, b):
+    print("Executing subtract function")
     return a - b
 
 # function map
@@ -22,43 +27,13 @@ functions = {
     "subtract": subtract
 }
 
-# create chat
-# chat = client.chats.create(
-#     model="gemini-2.5-flash",
-#     config={
-#         "system_instruction": """
-# You are a function calling assistant.
-
-# Available functions:
-# - add(a, b)
-# - subtract(a, b)
-
-# Rules:
-# - Always return JSON only
-
-# Example:
-# {
-#   "function": "add",
-#   "arguments": {"a": 5, "b": 3}
-# }
-
-# If not related:
-# {
-#   "function": "none",
-#   "message": "I can only do addition and subtraction."
-# }
-# """
-#     }
-# )
-
-
 tools = [
-    {
-        "function_declarations": [
-            {
-                "name": "add",
-                "description": "Add two numbers",
-                "parameters": {
+    types.Tool(
+        function_declarations=[
+            types.FunctionDeclaration(
+                name="add",
+                description="Add two numbers",
+                parameters={
                     "type": "OBJECT",
                     "properties": {
                         "a": {"type": "NUMBER"},
@@ -66,11 +41,11 @@ tools = [
                     },
                     "required": ["a", "b"]
                 }
-            },
-            {
-                "name": "subtract",
-                "description": "Subtract two numbers",
-                "parameters": {
+            ),
+            types.FunctionDeclaration(
+                name="subtract",
+                description="Subtract two numbers",
+                parameters={
                     "type": "OBJECT",
                     "properties": {
                         "a": {"type": "NUMBER"},
@@ -78,52 +53,31 @@ tools = [
                     },
                     "required": ["a", "b"]
                 }
-            }
+            )
         ]
-    }
+    )
 ]
 
-
-# ask question
 chatMsg = input("Ask a math question: ")
-# response = chat.send_message(chatMsg)
-response = client.models.generate_content(
-    model="gemini-2.0-flash",
-    contents="What is 10 minus 4?",
+# response = chat.send_message(chatMsg). # this is for chat-based models, for text-based models, use generate_content
+response = client.models.generate_content(  # for text-based models, use generate_content
+    model="gemini-2.5-flash",
+    contents=chatMsg,
     config={
         "tools": tools
     }
 )
-
-if response.candidates[0].content.parts[0].function_call:
+first_Part = response.candidates[0].content.parts[0]
+if first_Part.function_call:               # AI returns a lot of responses called candidates. .candidate[0] means we are filtering out the first candidate which supposed to be the best in the lot.
+    #.content reads the candidate 0's value. .part[0] is considering the first part because sometimes AI responses includes texts or other unwanted values in the end. Overall this filtrs out a function call and rejects everything else.
     func_call = response.candidates[0].content.parts[0].function_call
+    print("\nThis is what the func_cal have in it: \n",func_call,"\n")
     name = func_call.name
+    print("\nGot the name: ",name,"\n")
     args = func_call.args
+    print("\nGot the args: ",args,"\n")
+   
     print(name, args)
 
-functions = {
-    "add": add,
-    "subtract": subtract
-}
-result = functions[name](**args)
-
-
-
-# ai_text = response.text.strip()
-# print("AI says:", ai_text)
-
-# ai_text = ai_text.replace("```json", "").replace("```", "").strip()
-# # convert JSON string → python dict
-# data = json.loads(ai_text)
-
-# # call function
-# if data["function"] in functions:
-#     args = data["arguments"]
-#     result = functions[data["function"]](**args)
-#     print("Result:", result)
-
-# elif data["function"] == "none":
-#     print(data["message"])
-
-
-## solution = result, rationale , limitaions
+result = functions[name](**args) #The function is getting called here
+print("Result: ", result)
